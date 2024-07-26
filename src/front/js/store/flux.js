@@ -13,25 +13,71 @@ const getState = ({ getStore, getActions, setStore }) => {
 					background: "white",
 					initial: "white"
 				}
-			]
+			],
+			token:'',
 		},
 		actions: {
 			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
+			register: async (formData) => {
+				try {
+					const resp = await fetch(process.env.BACKEND_URL + 'api/signup', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							accept: 'application/json'
+						},
+						body:JSON.stringify(formData)
+					});
+					console.log(resp)
+					if(!resp.ok) throw new Error('Error creating user');
+					const data = await resp.json();
+					setStore({ user: data.user, token: data.token})
+					localStorage.setItem('token', data.token)
+					alert('User created')
+					return true
+				} catch (error) {
+					alert('Error creating user', error)
+				};
 			},
-
-			getMessage: async () => {
-				try{
-					// fetching data from the backend
-					const resp = await fetch(process.env.BACKEND_URL + "/api/hello")
-					const data = await resp.json()
-					setStore({ message: data.message })
-					// don't forget to return something, that is how the async resolves
-					return data;
-				}catch(error){
-					console.log("Error loading message from backend", error)
-				}
+			login: async (formData) => {
+				try {
+					const resp = await fetch(process.env.BACKEND_URL + 'api/login', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+							accept: 'application/json'
+						},
+						body:JSON.stringify(formData)
+					});
+					console.log(resp)
+					if(!resp.ok) throw new Error('Error while login');
+					const data = await resp.json();
+					setStore({ user: data.user, token: data.token})
+					localStorage.setItem('token', data.token)
+					alert('Logged')
+					return true
+				} catch (error) {
+					alert('Error creating user', error)
+				};
+			},
+			checkAuth: async () => {
+				try {
+					const token = getStore().token || localStorage.getItem('token');
+					const resp = await fetch(process.env.BACKEND_URL + 'api/token', {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json',
+							accept: 'application/json',
+							'Authorization': `Bearer ${token}`
+						},
+						body:JSON.stringify(formData)
+					});
+					if(!resp.ok) throw new Error('Bad token');
+					const data = await resp.json();
+					return true
+				} catch (error) {
+					return false
+				};
 			},
 			changeColor: (index, color) => {
 				//get the store
